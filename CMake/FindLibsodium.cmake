@@ -132,7 +132,12 @@ if (MSVC)
         set (_libsodium_lib_dir "${_libsodium_lib_dir}/static")
     endif (BUILD_SHARED_LIBS)
 
-    message (STATUS "Looking for Libsodium in: ${_libsodium_lib_dir}")
+    execute_process (  ## Show the contents of the directory
+        COMMAND
+            ${CMAKE_COMMAND} -E echo "Contents of ${_libsodium_lib_dir}:"
+        COMMAND
+            ${CMAKE_COMMAND} -E Get-Item "${_libsodium_lib_dir}\*"
+        )
 
     find_library (
         Libsodium_LIBRARY
@@ -145,13 +150,6 @@ if (MSVC)
         DOC "The libraries to link against"
         )
 else ()
-    message (
-        STATUS
-        "Looking for Libsodium in: \
-        /usr/lib /usr/local/lib \
-        ${_libsodium_lib_dir}"
-        )
-
     find_library (
         Libsodium_LIBRARY
         NAMES
