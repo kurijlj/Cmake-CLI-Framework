@@ -63,7 +63,12 @@ target_include_directories (
     )
 
 # Find the Libsodium library
-find_package (Libsodium 1.4.2 REQUIRED)
+if (MSVC)
+    find_package (Libsodium 1.4.2 REQUIRED)
+else ()
+    find_package (Libsodium 1.0.19 REQUIRED)
+endif ()
+
 if (Libsodium_FOUND)
     message (STATUS "Libsodium found (version ${Libsodium_VERSION})")
     message (STATUS "Libsodium_INCLUDE_DIR: ${Libsodium_INCLUDE_DIR}")
