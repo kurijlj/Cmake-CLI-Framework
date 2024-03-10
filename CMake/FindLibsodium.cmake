@@ -137,6 +137,8 @@ if (MSVC)
         message (FATAL_ERROR
             "The directory ${_libsodium_lib_dir} does not exist"
             )
+    endif ()
+
     file (GLOB _libsodium_lib_files "${_libsodium_lib_dir}/*.dll")
     message (STATUS "DLLs in ${_libsodium_lib_dir}: ${_libsodium_lib_files}")
 
