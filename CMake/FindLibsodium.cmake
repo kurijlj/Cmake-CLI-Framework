@@ -132,12 +132,9 @@ if (MSVC)
         set (_libsodium_lib_dir "${_libsodium_lib_dir}/static")
     endif (BUILD_SHARED_LIBS)
 
-    execute_process (  ## Show the contents of the directory
-        COMMAND
-            ${CMAKE_COMMAND} -E echo "Contents of ${_libsodium_lib_dir}:"
-        COMMAND
-            ${CMAKE_COMMAND} -E Get-Item "${_libsodium_lib_dir}\*"
-        )
+    # Check if the calculated directory holds required library files
+    file (GLOB _libsodium_lib_files "${_libsodium_lib_dir}/*.dll")
+    message (STATUS "DLLs in ${_libsodium_lib_dir}: ${_libsodium_lib_files}")
 
     find_library (
         Libsodium_LIBRARY
