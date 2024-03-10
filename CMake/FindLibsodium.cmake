@@ -132,16 +132,6 @@ if (MSVC)
         set (_libsodium_lib_dir "${_libsodium_lib_dir}/static")
     endif (BUILD_SHARED_LIBS)
 
-    # Check if the calculated directory holds required library files
-    if (NOT EXISTS "${_libsodium_lib_dir}")
-        message (FATAL_ERROR
-            "The directory ${_libsodium_lib_dir} does not exist"
-            )
-    endif ()
-
-    file (GLOB _libsodium_lib_files "${_libsodium_lib_dir}/*.dll")
-    message (STATUS "DLLs in ${_libsodium_lib_dir}: ${_libsodium_lib_files}")
-
     find_library (
         Libsodium_LIBRARY
         NAMES
