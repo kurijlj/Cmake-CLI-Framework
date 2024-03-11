@@ -1,10 +1,11 @@
 # Cmake-CLI-Framework
-[![GitHub License](https://img.shields.io/github/license/kurijlj/Cmake-CLI-Framework)]
-[![GitHub Release](https://img.shields.io/github/v/release/kurilj/CMake-CLI-Framework?logo=github)]
+
+![GitHub License](https://img.shields.io/github/license/kurijlj/Cmake-CLI-Framework)
+![GitHub Release](https://img.shields.io/github/v/release/kurilj/CMake-CLI-Framework?logo=github)
 [![GitHub Super-Linter](https://github.com/kurijlj/Cmake-CLI-Framework/actions/workflows/code-syntax-style-check.yml/badge.svg)](https://github.com/marketplace/actions/super-linter)
-[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/kurijlj/Cmake-CLI-Framework/cmake-multi-platform.yml?branch=main&event=push&style=flat&logo=cmake&label=CMake%20build&labelColor=%23064F8C)]
-[![Static Badge](https://img.shields.io/badge/-v17-%23ffffff?style=flat&logo=cplusplus&labelColor=%2300599C)]
-[![Static Badge](https://img.shields.io/badge/-3.12-%23ffffff?style=flat&logo=cmake&labelColor=%23064F8C)]
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/kurijlj/Cmake-CLI-Framework/cmake-multi-platform.yml?branch=main&event=push&style=flat&logo=cmake&label=CMake%20build&labelColor=%23064F8C)
+![Static Badge](https://img.shields.io/badge/-v17-%23ffffff?style=flat&logo=cplusplus&labelColor=%2300599C)
+![Static Badge](https://img.shields.io/badge/-3.12-%23ffffff?style=flat&logo=cmake&labelColor=%23064F8C)
 
 The Cmake-CLI-Framework is a comprehensive CMake project template designed to
 simplify the development process for C++ projects that utilize a command-line
