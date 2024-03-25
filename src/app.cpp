@@ -63,7 +63,9 @@
 
 // Standard Library headers
 #include <cstdlib>     // required by EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>   // required by std::current_exception()
 #include <filesystem>  // Used for testing directory and file status
+#include <fstream>     // Required for file I/O operations
 #include <iostream>    // required by cin, cout, ...
 #include <string>      // self explanatory ...
 #include <set>         // self explanatory ...
@@ -136,27 +138,44 @@ int main(int argc, char *argv[])
     fs::path exec_path {argv[0]};
     exec_name = exec_path.filename().string();
 
-    // Define structures to store command line options arguments and validators
-    struct CLIArguments {
-        bool        show_help;
-        bool        print_usage;
-        bool        show_version;
+    // Here we define the structure for holding the passed command line otions.
+    // The structure is also used to define the command line options and their
+    // default values.
+    struct CLIOptions {
+        bool show_help;
+        bool print_usage;
+        bool show_version;
+        std::string input_file;
+        std::vector<std::string> unsupported;
     };
 
-    CLIArguments user_options {false, false, false};
-
-    // Unsupported options aggregator.
-    std::vector<std::string> unknown_options;
+    // Define the default values for the command line options
+    CLIOptions user_options {
+        false,  // show_help
+        false,  // print_usage
+        false,  // show_version
+        "",     // input_file
+        {}      // unsupported options aggregator
+        };
 
     // Option filters definitions
-    auto istarget = clipp::match::prefix_not("-");
+    auto istarget = clipp::match::prefix_not("-");  // Filter out strings that
+                                                    // start with '-' (options)
 
     // Set command line options
-    auto cli = (
-        // Must have more than one option
-        // Take care not to omitt value filter when using
-        // path input options
+    auto parser_config = (
+        // Define the command line options and their default values.
+        // - Must have more than one option.
+        // - The order of the options is important.
+        // - The order of the options in the group is important.
+        // - Take care not to omitt value filter when parsing file and directory
+        //   names. Otherwise, the parser will treat options as values.
+        // - Define positional arguments first
+        // - Define positional srguments as optional to enforce the priority of
+        //   help, usage and version switches. Then enforce the required
+        //   positional arguments by checking if their values are set.
         (
+            clipp::opt_value(istarget, "INPUT_FILE", user_options.input_file),
             clipp::option("-h", "--help").set(user_options.show_help)
                 .doc("show this help message and exit"),
             clipp::option("--usage").set(user_options.print_usage)
@@ -164,85 +183,192 @@ int main(int argc, char *argv[])
             clipp::option("-V", "--version").set(user_options.show_version)
                 .doc("print program version")
         ).doc("general options:"),
-        clipp::any_other(unknown_options)
+        clipp::any_other(user_options.unsupported)
     );
 
-    // Parse command line options
-    if (clipp::parse(argc, argv, cli)) {
-        if (unknown_options.empty()) {
-            if (user_options.show_help) {
-                showHelp(cli, exec_name);
+    // Execute the main code inside a try block to catch any exceptions and
+    // to ensure that all of the code exits at exactly the same point
+    try {
+        // Parse command line options
+        auto result = clipp::parse(argc, argv, parser_config);
 
-                return EXIT_SUCCESS;
-            }
-            if (user_options.print_usage) {
-                auto fmt = clipp::doc_formatting {}
-                    .first_column(0)
-                    .last_column(79);
-
-                printUsage(cli, exec_name, fmt);
-
-                return EXIT_SUCCESS;
-            }
-            if (user_options.show_version) {
-                printVersionInfo();
-
-                return EXIT_SUCCESS;
-            }
-        } else {
-            std::cerr << "Unknown options: ";
-            for (const auto& opt : unknown_options) {
+        // Check if the unsupported options were passed
+        if (!user_options.unsupported.empty()) {
+            std::cerr << kAppName << ": Unsupported options: ";
+            for (const auto& opt : user_options.unsupported) {
                 std::cerr << opt << " ";
             }
-            std::cerr << "\n";
+            std::cerr << std::endl;
             printShortHelp(exec_name);
 
-            return EXIT_FAILURE;
+            throw EXIT_FAILURE;
         }
-    }
 
-    // No options provided. Execute default action
-    std::cout << kAppName << ": Hello World!" << std::endl;
+        // Check if the help switch was triggered. We give help switch the
+        // highest priority, so if it is triggered we don't need to check
+        // anything else.
+        if (user_options.show_help) {
+            showHelp(parser_config, exec_name);
 
-    // Try to initialize the libsodium library
-    if (sodium_init() < 0) {
-        std::cerr << kAppName
-            << ": Error initializing libsodium library!"
+            throw EXIT_SUCCESS;
+        }
+
+        // Check if the usage switch was triggered. Usge switch has the second
+        // highest priority, so if it is triggered we don't need to check
+        // anything else.
+        if (user_options.print_usage) {
+            auto fmt = clipp::doc_formatting {}
+                .first_column(0)
+                .last_column(79);
+
+            printUsage(parser_config, exec_name, fmt);
+
+            throw EXIT_SUCCESS;
+        }
+
+        // Check if the version switch was triggered. Version switch has the
+        // third highest priority.
+        if (user_options.show_version) {
+            printVersionInfo();
+
+            throw EXIT_SUCCESS;
+        }
+
+        // No high priority switch was triggered. Now we check if the input
+        // file was passed. If not we print the usage message and exit.
+        if (user_options.input_file.empty()) {
+            auto fmt = clipp::doc_formatting {}
+                .first_column(0)
+                .last_column(79)
+                .merge_alternative_flags_with_common_prefix(true);
+            std::cout << "Usage: ";
+            printUsage(parser_config, exec_name, fmt);
+
+            std::cout << std::endl;
+
+            // Print short help message
+            printShortHelp(exec_name);
+
+            throw EXIT_FAILURE;
+        }
+
+        // Input file was passed. Now we check if the file exists, is
+        // readable and is a regular file and not an empty file.
+        // Check if the file exists
+        if(!fs::exists(user_options.input_file)) {
+            std::cerr << kAppName
+                << ": File does not exist: "
+                << user_options.input_file
+                << std::endl;
+            throw EXIT_FAILURE;
+        }
+
+        // Check if the file is a regular file
+        if(!fs::is_regular_file(user_options.input_file)) {
+            std::cerr << kAppName
+                << ": Not a regular file: "
+                << user_options.input_file
+                << std::endl;
+            throw EXIT_FAILURE;
+        }
+
+        // Check if the file is empty
+        if(fs::file_size(user_options.input_file) == 0) {
+            std::cerr << kAppName
+                << ": Empty file: "
+                << user_options.input_file
+                << std::endl;
+            throw EXIT_FAILURE;
+        }
+
+        // Open the file in binary mode for wider compatibility
+        std::ifstream file(
+            user_options.input_file,
+            std::ios::binary
+            );
+
+        // Check if the file was opened successfully
+        // (if we can read it)
+        if(!file.is_open()) {
+            std::cerr << kAppName
+                << ": Error opening file: "
+                << user_options.input_file
+                << std::endl;
+            throw EXIT_FAILURE;
+        }
+
+        // Everything went well. Print success message and close the file
+        std::cout << kAppName
+            << ": File `"
+            << user_options.input_file
+            << "` opened successfully!"
+            << std::endl;
+        file.close();
+
+        // Try to initialize the libsodium library
+        if (sodium_init() < 0) {
+            std::cerr << kAppName
+                << ": Error initializing libsodium library!"
+                << std::endl;
+
+            throw EXIT_FAILURE;
+        }
+
+        // Sodium library initialized successfully. Print success message
+        std::cout << kAppName
+            << ": Libsodium library initialized successfully!"
             << std::endl;
 
+        // Create a SQLite3 database connection
+        sqlite3* DB; 
+    
+        // Try to open the database. If it does not exist, it will be created
+        int ret_code = sqlite3_open("example.db", &DB); 
+  
+        // Check if the database was opened successfully
+        if (0 != ret_code) { 
+            // Something went wrong. Print error message and exit
+            std::cerr << kAppName
+                << ": Error creating DB: "
+                << sqlite3_errmsg(DB)
+                << std::endl; 
+
+            throw EXIT_FAILURE;
+        } 
+    
+        // Everything went well. Print success message
+        std::cout << kAppName
+            << ": Database opened successfully!"
+            << std::endl; 
+
+        // Close the database
+        sqlite3_close(DB); 
+
+        // Return success
+        throw EXIT_SUCCESS;
+
+    } catch (int result) {
+        // Return the result of the main code
+        return result;
+
+    } catch (...) {
+        // We have an unhandled exception. Print error message and exit
+        try {
+            std::rethrow_exception(std::current_exception());
+        } catch (const std::exception& e) {
+            std::cerr << kAppName << ": Unhandled exception: " << e.what()
+                << std::endl;
+        }
+
+        // Return an error code
         return EXIT_FAILURE;
     }
 
-    // Sodium library initialized successfully. Print success message
-    std::cout << kAppName
-        << ": Libsodium library initialized successfully!"
-        << std::endl;
+    // The code should never reach this point. If it does, print an error
+    // message and exit
+    std::cerr << kAppName << ": Unhandled program exit!" << std::endl;
 
-    // Create a SQLite3 database connection
-    sqlite3* DB; 
-    
-    // Try to open the database. If it does not exist, it will be created
-    int ret_code = sqlite3_open("example.db", &DB); 
-  
-    // Check if the database was opened successfully
-    if (0 != ret_code) { 
-        // Something went wrong. Print error message and exit
-        std::cerr << kAppName
-            << ": Error creating DB: "
-            << sqlite3_errmsg(DB)
-            << std::endl; 
-
-        return EXIT_FAILURE;
-    } 
-    
-    // Everything went well. Print success message
-    std::cout << kAppName << ": Database opened successfully!" << std::endl; 
-
-    // Close the database
-    sqlite3_close(DB); 
-
-    // Return success
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE;
 }
 
 
@@ -253,7 +379,6 @@ int main(int argc, char *argv[])
 inline void printShortHelp(std::string exec_name) {
     std::cout << "Try '" << exec_name << " --help' for more information.\n";
 }
-
 
 inline void printUsage(
         const clipp::group& group,
