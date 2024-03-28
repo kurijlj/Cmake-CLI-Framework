@@ -86,5 +86,8 @@ else ()
     message (FATAL_ERROR "Libsodium not found")
 endif ()
 
+# Add the CSV Parser library
+add_subdirectory ("${PROJECT_SOURCE_DIR}/extern/csv-parser")
+
 # Add the source files directory
 add_subdirectory ("${PROJECT_SOURCE_DIR}/src")

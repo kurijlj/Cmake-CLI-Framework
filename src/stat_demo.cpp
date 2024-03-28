@@ -1,7 +1,8 @@
 // ============================================================================
-// <one line to give the program's name and a brief idea of what it does.>
+// stat_demo - Demonstrates calculation of common statistical values from a
+//            sample of values drawn from a normal distribution.
 //
-//  Copyright (C) <yyyy> <Author Name> <author@mail.com>
+//  Copyright (C) 2024 Ljubomir Kurij <ljubomir_kurij@protonmail.com>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,45 +22,11 @@
 
 // ============================================================================
 //
-// <Put documentation here>
+// 2024-03-28 Ljubomir Kurij <ljubomir_kurij@protonmail.com>
 //
-// <yyyy>-<mm>-<dd> <Author Name> <author@mail.com>
-//
-// * <programfilename>.cpp: created.
+// * stat_demo.cpp: created.
 //
 // ============================================================================
-
-
-// ============================================================================
-//
-// References (this section should be deleted in the release version)
-//
-// * For coding style visit Google C++ Style Guide page at
-//   <https://google.github.io/styleguide/cppguide.html>.
-//
-// * For command line arguments parsing using clipp consult documentation and
-//   examples at <https://github.com/muellan/clipp>.
-//
-// * For filesystem operations (C++17) visit 'filesystem' reference at:
-//   <https://en.cppreference.com/w/cpp/filesystem>.
-//
-// * For SQLite3 C/C++ interface documentation visit
-//   <https://www.sqlite.org/c3ref/intro.html>.
-//
-// * For libsodium library documentation visit
-//   <https://libsodium.gitbook.io/doc/>.
-//
-// * For CSV parser library documentation visit
-//   <https://github.com/vincentlaucsb/csv-parser>
-//
-// ============================================================================
-
-
-// ============================================================================
-// Preprocessor directives section
-// ============================================================================
-#define SODIUM_STATIC 1  // Required for 'sodium.h' to work properly if using
-                         // static linking of the library
 
 
 // ============================================================================
@@ -71,21 +38,18 @@
 // "C" system headers
 
 // Standard Library headers
-#include <cmath>       // required by std::pow, std::sqrt, ...
-#include <cstdlib>     // required by EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>   // required by std::current_exception
+#include <cctype>
+#include <cmath>
+#include <cstdlib>
 #include <filesystem>  // Used for testing directory and file status
-#include <fstream>     // Required for file I/O operations
-#include <iomanip>     // required by std::setw
-#include <iostream>    // required by cin, cout, ...
-#include <map>         // required by std::map
-#include <string>      // required by std::string
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <random>
+#include <string>
 
 // External libraries headers
 #include <clipp.hpp>  // command line arguments parsing
-#include <sqlite3.h>  // SQLite3 database library
-#include <sodium.h>   // Libsodium library
-#include <csv.hpp>    // CSV parser library
 
 
 // ============================================================================
@@ -96,17 +60,25 @@ namespace fs = std::filesystem;
 
 
 // ============================================================================
+// Define aliases
+// ============================================================================
+
+using u32    = std::uint_least32_t; 
+using engine = std::mt19937;
+
+
+// ============================================================================
 // Global constants section
 // ============================================================================
 
-const std::string kAppName = "cli_app";
-const std::string kVersionString = "0.1";
-const std::string kYearString = "yyyy";
+const std::string kAppName = "stat_demo";
+const std::string kVersionString = "1.0";
+const std::string kYearString = "2024";
 const std::string kAuthorName = "Ljubomir Kurij";
 const std::string kAuthorEmail = "ljubomir_kurij@protonmail.com";
 const std::string kAppDoc = "\
-Framework for developing command line applications using \'clipp\' command\n\
-line argument parsing library.\n\n\
+Demonstrates calculation of common statistical values from a sample of\n\
+values drawn from a normal distribution.\n\n\
 Mandatory arguments to long options are mandatory for short options too.\n";
 const std::string kLicense = "\
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\
@@ -156,7 +128,8 @@ int main(int argc, char *argv[])
         bool show_help;
         bool print_usage;
         bool show_version;
-        std::string input_file;
+        float mean_value;
+        float stddev_value;
         std::vector<std::string> unsupported;
     };
 
@@ -165,28 +138,14 @@ int main(int argc, char *argv[])
         false,  // show_help
         false,  // print_usage
         false,  // show_version
-        "",     // input_file
+        50.0,   // mean_value
+        5.0,    // stddev_value
         {}      // unsupported options aggregator
         };
 
-    // Option filters definitions
-    auto istarget = clipp::match::prefix_not("-");  // Filter out strings that
-                                                    // start with '-' (options)
-
     // Set command line options
     auto parser_config = (
-        // Define the command line options and their default values.
-        // - Must have more than one option.
-        // - The order of the options is important.
-        // - The order of the options in the group is important.
-        // - Take care not to omitt value filter when parsing file and directory
-        //   names. Otherwise, the parser will treat options as values.
-        // - Define positional arguments first
-        // - Define positional srguments as optional to enforce the priority of
-        //   help, usage and version switches. Then enforce the required
-        //   positional arguments by checking if their values are set.
         (
-            clipp::opt_value(istarget, "INPUT_FILE", user_options.input_file),
             clipp::option("-h", "--help").set(user_options.show_help)
                 .doc("show this help message and exit"),
             clipp::option("--usage").set(user_options.print_usage)
@@ -194,13 +153,21 @@ int main(int argc, char *argv[])
             clipp::option("-V", "--version").set(user_options.show_version)
                 .doc("print program version")
         ).doc("general options:"),
+        (
+            (clipp::option("-m", "--mean")
+                & clipp::opt_value("mju", user_options.mean_value)
+            ).doc("set the mean value of the normal distribution"),
+            (clipp::option("-s", "--standard-deviation")
+                & clipp::opt_value("stddev", user_options.stddev_value)
+            ).doc("set the standard deviation of the normal distribution")
+        ).doc("normal distribution options:"),
         clipp::any_other(user_options.unsupported)
     );
 
     // Execute the main code inside a try block to catch any exceptions and
     // to ensure that all of the code exits at exactly the same point
     try {
-        // Parse command line options
+        // Parse command line options -----------------------------------------
         auto result = clipp::parse(argc, argv, parser_config);
 
         // Check if the unsupported options were passed
@@ -245,144 +212,163 @@ int main(int argc, char *argv[])
             throw EXIT_SUCCESS;
         }
 
-        // No high priority switch was triggered. Now we check if the input
-        // file was passed. If not we print the usage message and exit.
-        if (user_options.input_file.empty()) {
-            auto fmt = clipp::doc_formatting {}
-                .first_column(0)
-                .last_column(79)
-                .merge_alternative_flags_with_common_prefix(true);
-            std::cout << "Usage: ";
-            printUsage(parser_config, exec_name, fmt);
+        // Validate user input ------------------------------------------------
 
-            std::cout << std::endl;
-
-            // Print short help message
+        // Check if the mean value is an integer
+        if ((int) std::floor(user_options.mean_value)
+                != (int) std::ceil(user_options.mean_value)) {
+            std::cerr << kAppName
+                << ": Mean value must be an integer."
+                << std::endl;
             printShortHelp(exec_name);
 
             throw EXIT_FAILURE;
         }
 
-        // Input file was passed. Now we check if the file exists, is
-        // readable and is a regular file and not an empty file.
-        // Check if the file exists
-        if(!fs::exists(user_options.input_file)) {
+        // Check if the standard deviation value is an integer
+        if ((int) std::floor(user_options.stddev_value)
+                != (int) std::ceil(user_options.stddev_value)) {
             std::cerr << kAppName
-                << ": File does not exist: "
-                << user_options.input_file
+                << ": Standard deviation value must be an integer."
                 << std::endl;
-            throw EXIT_FAILURE;
-        }
-
-        // Check if the file is a regular file
-        if(!fs::is_regular_file(user_options.input_file)) {
-            std::cerr << kAppName
-                << ": Not a regular file: "
-                << user_options.input_file
-                << std::endl;
-            throw EXIT_FAILURE;
-        }
-
-        // Check if the file is empty
-        if(fs::file_size(user_options.input_file) == 0) {
-            std::cerr << kAppName
-                << ": Empty file: "
-                << user_options.input_file
-                << std::endl;
-            throw EXIT_FAILURE;
-        }
-
-        // Open the file in binary mode for wider compatibility
-        std::ifstream file(
-            user_options.input_file,
-            std::ios::binary
-            );
-
-        // Check if the file was opened successfully
-        // (if we can read it)
-        if(!file.is_open()) {
-            std::cerr << kAppName
-                << ": Error opening file: "
-                << user_options.input_file
-                << std::endl;
-            throw EXIT_FAILURE;
-        }
-
-        // Everything went well. Print success message and close the file
-        std::cout << kAppName
-            << ": File `"
-            << user_options.input_file
-            << "` opened successfully!"
-            << std::endl;
-        file.close();
-
-        // Check if the file is a CSV file
-
-        // Create a CSV parser object. Set the variable column policy to throw
-        // an exception if the number of columns is not consistent (not an CSV
-        // file)
-        csv::CSVFormat format;
-        format.variable_columns(csv::VariableColumnPolicy::THROW);
-        csv::CSVReader reader(user_options.input_file, format);
-        try {
-            for (auto it = reader.begin(); it != reader.end(); ++it);
-        } catch (std::runtime_error& e) {
-            std::cerr << kAppName
-                << ": File `"
-                << user_options.input_file
-                << "` is not a CSV file: Variable number of columns!"
-                << std::endl;
-            throw EXIT_FAILURE;
-        }
-
-        // Try to initialize the libsodium library
-        if (sodium_init() < 0) {
-            std::cerr << kAppName
-                << ": Error initializing libsodium library!"
-                << std::endl;
+            printShortHelp(exec_name);
 
             throw EXIT_FAILURE;
         }
 
-        // Sodium library initialized successfully. Print success message
-        std::cout << kAppName
-            << ": Libsodium library initialized successfully!"
-            << std::endl;
-
-        // Create a SQLite3 database connection
-        sqlite3* DB; 
+        // Everyting is OK. Proceed with the main code ------------------------
+        std::map<int, int> table;
     
-        // Try to open the database. If it does not exist, it will be created
-        int ret_code = sqlite3_open("example.db", &DB); 
-  
-        // Check if the database was opened successfully
-        if (0 != ret_code) { 
-            // Something went wrong. Print error message and exit
-            std::cerr << kAppName
-                << ": Error creating DB: "
-                << sqlite3_errmsg(DB)
-                << std::endl; 
+        // Initalize the random number generator with the normal distribution
+        std::random_device os_seed;
+        const u32 seed = os_seed();
+        engine generator {seed};
+        std::normal_distribution d {
+            user_options.mean_value,
+            user_options.stddev_value
+            };
 
-            throw EXIT_FAILURE;
-        } 
+        // draw a sample from the normal distribution and round it to an integer
+        auto random_int = [&d, &generator]{ return std::round(d(generator));};
     
-        // Everything went well. Print success message
-        std::cout << kAppName
-            << ": Database opened successfully!"
-            << std::endl; 
+        // Populate the table
+        for(int i = 0; i < 10000; ++i)
+            ++table[random_int()];
+    
+        // Collect statistics on the table data
+    
+        // Calculate the mean value
+        int total_occurences = 0;
+        float mean_value = 0.0;
+        for (const auto& [value, occurence] : table) {
+            total_occurences += occurence;
+        }
+        for (const auto& [value, occurence] : table) {
+            float pval = (float) occurence / (float) total_occurences;
+            table[value] = round(pval * 1000);
+            mean_value += (float) value * pval;
+        }
+        mean_value = round(mean_value);
+    
+        // Calculate the variance
+        float variance = 0.0;
+        for (const auto& [value, occurence] : table) {
+            float pval = (float) occurence / 1000;    
+            variance += std::pow(value - mean_value, 2) * pval;
+        }
 
-        // Close the database
-        sqlite3_close(DB); 
+        // Calculate the standard deviation
+        int sigma = std::round(std::sqrt(variance));
+    
+        // Calculate the mode value
+        int mode_value = 0;
+        int max_occurence = 0;
+        for (const auto& [value, occurence] : table) {
+            if (occurence > max_occurence) {
+                mode_value = value;
+                max_occurence = occurence;
+            }
+        }
+    
+        // Reset total_occurences
+        total_occurences = 0;
+        for (const auto& [value, occurence] : table) {
+            total_occurences += occurence;
+        }
+    
+        // Calculate the median value
+        int median_value = 0;
+        int median_occurences = total_occurences / 2;
+        int current_occurences = 0;
+        for (const auto& [value, occurence] : table) {
+            current_occurences += occurence;
+            if (current_occurences >= median_occurences) {
+                median_value = value;
+                break;
+            }
+        }
 
-        // Return success
+        std::cout << "Normal distribution statistics:" << std::endl;
+        std::cout << "User set mean value: "
+            << user_options.mean_value << std::endl;
+        std::cout << "User set standard deviation: "
+            << user_options.stddev_value << std::endl;
+        std::cout << "Calculated mean value: " << mean_value << std::endl;
+        std::cout << "Calculated standard deviation: " << sigma << std::endl;
+        std::cout << "Calculated mode value: " << mode_value << std::endl;
+        std::cout << "Calculated median value: " << median_value << std::endl;
+        std::cout << std::endl;
+
+        for (auto [value, occurence] : table) {
+            std::string vfield = std::to_string(value);
+            if (mean_value == value)
+                vfield = "<" + vfield + ">";
+            if (mode_value == value)
+                vfield = "[" + vfield + "]";
+            if (median_value == value)
+                vfield = "{" + vfield + "}";
+            if (0 != sigma) {
+                if (value == mean_value - sigma)
+                    vfield = "-1s " + vfield;
+                if (value == mean_value + sigma)
+                    vfield = " 1s " + vfield;
+            }
+
+            // Determine the position of the value's most insignificant digit in
+            // the string representation of the value
+            int pos = 0;
+            for (int i = vfield.size() - 1; i >= 0; --i) {
+                if (std::isdigit(vfield[i])) {
+                    pos = i;
+                    break;
+                }
+            }
+
+            // Fill the value field with spaces to be 12 characters wide, and
+            // align the values
+            vfield = vfield + std::string(4 - (vfield.size() - pos), ' ');
+            vfield = std::string(12 - vfield.size(), ' ') + vfield;
+
+            // Print the value field and the bar chart
+            std::cout << vfield << " "
+                << std::string(occurence, '*') << std::endl;
+
+        }
+    
+        std::cout << std::endl;
+        std::cout << "Legend: <> - mean value, [] - mode value, "
+            << "{} - median value, -/+1s - 1 standard deviation" << std::endl;
+
+        // Exit the program with a successful exit code -----------------------
         throw EXIT_SUCCESS;
 
     } catch (int result) {
-        // Return the result of the main code
+        // Return the result of the main code ---------------------------------
         return result;
 
     } catch (...) {
-        // We have an unhandled exception. Print error message and exit
+        // We have an unhandled exception. Print error message and exit with
+        // an error code ------------------------------------------------------
         try {
             std::rethrow_exception(std::current_exception());
         } catch (const std::exception& e) {
@@ -395,7 +381,7 @@ int main(int argc, char *argv[])
     }
 
     // The code should never reach this point. If it does, print an error
-    // message and exit
+    // message and exit with an error code ------------------------------------
     std::cerr << kAppName << ": Unhandled program exit!" << std::endl;
 
     return EXIT_FAILURE;

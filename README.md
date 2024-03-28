@@ -1,7 +1,6 @@
 # Cmake-CLI-Framework
 
 ![GitHub License](https://img.shields.io/github/license/kurijlj/Cmake-CLI-Framework)
-![GitHub Release](https://img.shields.io/github/v/release/kurilj/CMake-CLI-Framework?logo=github)
 [![GitHub Super-Linter](https://github.com/kurijlj/Cmake-CLI-Framework/actions/workflows/code-syntax-style-check.yml/badge.svg)](https://github.com/marketplace/actions/super-linter)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/kurijlj/Cmake-CLI-Framework/cmake-multi-platform.yml?branch=main&event=push&style=flat&logo=cmake&label=CMake%20build&labelColor=%23064F8C)
 ![Static Badge](https://img.shields.io/badge/-v17-%23ffffff?style=flat&logo=cplusplus&labelColor=%2300599C)
@@ -56,14 +55,27 @@ business logic and CMake build instructions required for your app.
 
 ## Third-party Library Integration
 
-- **clipp:** The framework assumes clipp as a header-only library. Steps on how
-to link to the library are described in the top-level CMakeLists.txt file.
-- **sqlite3:** The framework utilizes CMake's add_library function to integrate
-sqlite3. Steps on how to link to the library are described in the top-level
-CMakeLists.txt file.
-- **libsodium:** The project leverages FindLibsodium.cmake to locate and
-integrate libsodium. Steps on how to link to the library are described in the
-top-level CMakeLists.txt file.
+- **[clipp](https://github.com/muellan/clipp):** The framework assumes clipp as
+  a header-only library. Steps on how to link to the library are described in
+  the top-level CMakeLists.txt file.
+- **[sqlite3](https://www.sqlite.org/c3ref/intro.html):** The framework utilizes
+  CMake's `add_library` function to integrate sqlite3. Steps on how to link to
+  the library are described in the top-level CMakeLists.txt file.
+- **[libsodium](https://libsodium.gitbook.io/doc/):** The project leverages
+  FindLibsodium.cmake to locate and integrate libsodium. Steps on how to link to
+  the library are described in the top-level CMakeLists.txt file.
+- **[Vince's CSV Parser](https://github.com/vincentlaucsb/csv-parser):** The
+  framework utilizes CMake's `add_subdirectory` function to integrate Vince's
+  CSV Parser library and utilize it for the validation and parsing of the
+  CSV files.
+
+## Build Targets
+
+- **app:** Framework for developing command line applications using 'clipp'
+  command line argument parsing library.
+- **stat_demo:** Demonstrates calculation of common statistical values from a
+  sample of values drawn from a normal distribution.
+- **all**: Build all abovementioned targets.
 
 ## License
 
