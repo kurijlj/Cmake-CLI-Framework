@@ -74,20 +74,17 @@ jobs:
           sudo apt-get install -y libsodium-dev
         fi
 
-    - name: Pull submodules
+    - name: Pull project submodules
       shell: bash
       run: git submodule update --init --recursive
 
     - name: Update CSV Reader CMakelists
-      # run: |
-      #   if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-      #     cp -f ${{ github.workspace }}/extern/CMakeLists_CSV.txt ${{ github.workspace }}/extern/csv-parser/CMakeLists.txt
-      #   fi
-      copy:
-        from: extern/CMakeLists_CSV.txt
-        to: extern/csv-parser/CMakeLists.txt
+      working-directory: extern
+      shell: bash
+      run: cp CMakelists.txt csv-reader/CMakeLists.txt
 
     - name: Configure CMake
+      working-directory: ${{ github.workspace }}/build
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
