@@ -142,6 +142,19 @@ if (MSVC)
         REQUIRED
         DOC "The libraries to link against"
         )
+
+    # Find the shared library for MSVC
+    find_path (
+        Libsodium_SHARED_LIBRARY
+        NAMES
+            libsodium.dll
+        PATHS
+            /usr/lib
+            /usr/local/lib
+            "${_libsodium_lib_dir}"
+        DOC "The Libsodium *.dll directory"
+        )
+
 else ()
     find_library (
         Libsodium_LIBRARY
