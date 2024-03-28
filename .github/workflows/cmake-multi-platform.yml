@@ -82,18 +82,14 @@ jobs:
       shell: bash
       run: |
         if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-          cp -f
-          ${{ github.workspace }}/extern/CMakeLists_CSV.txt
-          ${{ github.workspace }}/extern/csv-parser/CMakeLists.txt
+          cp -f ${{ github.workspace }}/extern/CMakeLists_CSV.txt ${{ github.workspace }}/extern/csv-parser/CMakeLists.txt
         fi
 
     - name: Update CSV Reader CMakelists for Windows
       shell: powershell
       run: |
-        if ("${{ matrix.os }}" == "windows-latest") {
-          Copy-Item -Force
-          ${{ github.workspace }}\extern\CMakeLists_CSV.txt
-          ${{ github.workspace }}\extern\csv-parser\CMakeLists.txt
+        if ("${{ matrix.os }}" -eq "windows-latest") {
+          Copy-Item -Force ${{ github.workspace }}\extern\CMakeLists_CSV.txt ${{ github.workspace }}\extern\csv-parser\CMakeLists.txt
         }
 
     - name: Configure CMake
