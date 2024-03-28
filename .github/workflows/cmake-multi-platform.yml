@@ -79,12 +79,12 @@ jobs:
       run: git submodule update --init --recursive
 
     - name: Update CSV Reader CMakelists Ubuntu
-      condition: ${{ matrix.os == 'ubuntu-latest' }}
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       shell: bash
       run: cp -f ${{ github.workspace }}/extern/CMakeLists_CSV.txt ${{ github.workspace }}/extern/csv-parser/CMakeLists.txt
 
     - name: Update CSV Reader CMakelists Windows
-      condition: ${{ matrix.os == 'windows-latest' }}
+      if: ${{ matrix.os == 'windows-latest' }}
       shell: powershell
       run: Copy-Item -Path ${{ github.workspace }}/extern/CMakeLists_CSV.txt -Destination ${{ github.workspace }}/extern/csv-parser/CMakeLists.txt
 
