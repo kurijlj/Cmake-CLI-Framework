@@ -81,6 +81,8 @@ jobs:
     - name: Update CSV Reader CMakelists
       shell: bash
       run: >
+        ls -la ${{ github.workspace }}/extern
+        ls -la ${{ github.workspace }}/extern/csv-reader
         cp -f
         ${{ github.workspace }}/extern/CMakeLists_CSV.txt
         ${{ github.workspace }}/extern/csv-reader/CMakeLists.txt
