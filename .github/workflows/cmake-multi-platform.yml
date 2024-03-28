@@ -78,19 +78,14 @@ jobs:
       shell: bash
       run: git submodule update --init --recursive
 
-    - name: Update CSV Reader CMakelists for Linux
-      shell: bash
-      run: |
-        if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-          cp -f ${{ github.workspace }}/extern/CMakeLists_CSV.txt ${{ github.workspace }}/extern/csv-parser/CMakeLists.txt
-        fi
-
-    - name: Update CSV Reader CMakelists for Windows
-      shell: powershell
-      run: |
-        if ("${{ matrix.os }}" -eq "windows-latest") {
-          Copy-Item -Force ${{ github.workspace }}\extern\CMakeLists_CSV.txt ${{ github.workspace }}\extern\csv-parser\CMakeLists.txt
-        }
+    - name: Update CSV Reader CMakelists
+      # run: |
+      #   if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+      #     cp -f ${{ github.workspace }}/extern/CMakeLists_CSV.txt ${{ github.workspace }}/extern/csv-parser/CMakeLists.txt
+      #   fi
+      copy:
+        from: extern/CMakeLists_CSV.txt
+        to: extern/csv-parser/CMakeLists.txt
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
