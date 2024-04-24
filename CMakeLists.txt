@@ -89,6 +89,9 @@ else ()
     message (FATAL_ERROR "Libsodium not found")
 endif ()
 
+# Add the CSV Parser library
+add_subdirectory ("${PROJECT_SOURCE_DIR}/extern/csv-parser")
+
 # Fetch GoogleTest framework
 include(FetchContent)
 FetchContent_Declare(

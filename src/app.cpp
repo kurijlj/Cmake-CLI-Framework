@@ -44,6 +44,15 @@
 // * For filesystem operations (C++17) visit 'filesystem' reference at:
 //   <https://en.cppreference.com/w/cpp/filesystem>.
 //
+// * For SQLite3 C/C++ interface documentation visit
+//   <https://www.sqlite.org/c3ref/intro.html>.
+//
+// * For libsodium library documentation visit
+//   <https://libsodium.gitbook.io/doc/>.
+//
+// * For CSV parser library documentation visit
+//   <https://github.com/vincentlaucsb/csv-parser>
+//
 // ============================================================================
 
 
@@ -63,19 +72,21 @@
 // "C" system headers
 
 // Standard Library headers
+#include <cmath>       // required by std::pow, std::sqrt, ...
 #include <cstdlib>     // required by EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>   // required by std::current_exception()
+#include <exception>   // required by std::current_exception
 #include <filesystem>  // Used for testing directory and file status
 #include <fstream>     // Required for file I/O operations
+#include <iomanip>     // required by std::setw
 #include <iostream>    // required by cin, cout, ...
-#include <string>      // self explanatory ...
-#include <set>         // self explanatory ...
-#include <vector>      // self explanatory ...
+#include <map>         // required by std::map
+#include <string>      // required by std::string
 
 // External libraries headers
 #include <clipp.hpp>  // command line arguments parsing
 #include <sqlite3.h>  // SQLite3 database library
 #include <sodium.h>   // Libsodium library
+#include <csv.hpp>    // CSV parser library
 
 
 // ============================================================================
@@ -130,7 +141,7 @@ void showHelp(
 
 
 // ============================================================================
-// App's main function body
+// Main Function Section
 // ============================================================================
 
 int main(int argc, char *argv[])
@@ -306,6 +317,25 @@ int main(int argc, char *argv[])
             << std::endl;
         file.close();
 
+        // Check if the file is a CSV file
+
+        // Create a CSV parser object. Set the variable column policy to throw
+        // an exception if the number of columns is not consistent (not an CSV
+        // file)
+        csv::CSVFormat format;
+        format.variable_columns(csv::VariableColumnPolicy::THROW);
+        csv::CSVReader reader(user_options.input_file, format);
+        try {
+            for (auto it = reader.begin(); it != reader.end(); ++it);
+        } catch (std::runtime_error& e) {
+            std::cerr << kAppName
+                << ": File `"
+                << user_options.input_file
+                << "` is not a CSV file: Variable number of columns!"
+                << std::endl;
+            throw EXIT_FAILURE;
+        }
+
         // Try to initialize the libsodium library
         if (sodium_init() < 0) {
             std::cerr << kAppName
@@ -405,7 +435,10 @@ void showHelp(
     auto fmt = clipp::doc_formatting {}.first_column(0).last_column(79);
     clipp::man_page man;
 
-    man.prepend_section("USAGE", clipp::usage_lines(group, exec_name, fmt).str());
+    man.prepend_section(
+        "USAGE",
+        clipp::usage_lines(group, exec_name, fmt).str()
+        );
     man.append_section("", doc);
     man.append_section("", clipp::documentation(group, fmt).str());
     man.append_section("", "Report bugs to <" + kAuthorEmail + ">.");
