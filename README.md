@@ -5,7 +5,7 @@
 [![GitHub Super-Linter](https://github.com/kurijlj/Cmake-CLI-Framework/actions/workflows/code-syntax-style-check.yml/badge.svg)](https://github.com/marketplace/actions/super-linter)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/kurijlj/Cmake-CLI-Framework/cmake-multi-platform.yml?branch=main&event=push&style=flat&logo=cmake&label=CMake%20build&labelColor=%23064F8C)
 ![Static Badge](https://img.shields.io/badge/-v17-%23ffffff?style=flat&logo=cplusplus&labelColor=%2300599C)
-![Static Badge](https://img.shields.io/badge/-3.12-%23ffffff?style=flat&logo=cmake&labelColor=%23064F8C)
+![Static Badge](https://img.shields.io/badge/-3.14-%23ffffff?style=flat&logo=cmake&labelColor=%23064F8C)
 
 The Cmake-CLI-Framework is a comprehensive CMake project template designed to
 simplify the development process for C++ projects that utilize a command-line
@@ -23,6 +23,21 @@ files, like sqlite3 and libsodium. This provides options for diverse library
 dependencies.
 - **Simplified CLI Integration:** The framework offers mechanisms to simplify
 the integration of CLI functionalities into your C++ project.
+- **Integrated GoogleTest Framework:** The project integrates GoogleTest for
+unit testing, providing a robust testing framework out of the box.
+
+This project aims to streamline the setup process for C++ projects by providing
+a well-organized and extensible template that can be easily customized to suit
+your needs. By leveraging CMake's flexibility and cross-platform support, this
+framework offers a solid foundation for developing CLI applications with
+third-party library integration.
+
+## Table of Contents
+
+1. [Getting Started](#getting-started)
+2. [Third-party Library Integration](#third-party-library-integration)
+3. [Project Structure](#project-structure)
+4. [License](#license)
 
 ## Getting Started
 
@@ -64,6 +79,20 @@ CMakeLists.txt file.
 - **libsodium:** The project leverages FindLibsodium.cmake to locate and
 integrate libsodium. Steps on how to link to the library are described in the
 top-level CMakeLists.txt file.
+- **GoogleTest:** The project integrates GoogleTest using the FetchContent
+module. The test target is added to the project in the CMakeLists.txt file.
+
+## Project Structure
+
+The project structure is organized as follows:
+
+- **bin:** Contains the executable generated after building the project.
+- **build:** Contains the makefiles and object files generated during the build
+process.
+- **extern:** Contains third-party libraries and dependencies.
+- **include:** Contains the header files required for the project.
+- **src:** Contains the source files for the project.
+- **tests:** Contains the test files for the project.
 
 ## License
 

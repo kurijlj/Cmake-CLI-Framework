@@ -3,7 +3,7 @@
 # ============================================================================
 
 # Define the minimum required version of CMake
-cmake_minimum_required (VERSION 3.12...3.40)
+cmake_minimum_required (VERSION 3.14...3.40)
 
 # Define the project name and version
 project (
@@ -28,6 +28,9 @@ endif ()
 
 # Set to build with shared libraries by default
 option (BUILD_SHARED_LIBS "Build using shared libraries" ON)
+
+# Set to build with tests by default
+option (BUILD_TESTS "Build with tests" ON)
 
 # Determine whether the libraries are built as shared or static
 if (BUILD_SHARED_LIBS)
@@ -86,5 +89,22 @@ else ()
     message (FATAL_ERROR "Libsodium not found")
 endif ()
 
+# Fetch GoogleTest framework
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+if (WIN32)
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+endif ()
+
 # Add the source files directory
 add_subdirectory ("${PROJECT_SOURCE_DIR}/src")
+
+# Add the tests directory
+if (BUILD_TESTS)
+    add_subdirectory ("${PROJECT_SOURCE_DIR}/tests")
+endif ()
