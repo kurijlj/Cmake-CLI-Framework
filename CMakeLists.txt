@@ -65,49 +65,43 @@ target_include_directories (
     "${PROJECT_SOURCE_DIR}/extern/sqlite3"
     )
 
-# Find the Libsodium library
-if (MSVC)
-    find_package (Libsodium 1.4.2 REQUIRED)
-else ()
-    find_package (Libsodium 1.0.19 REQUIRED)
-endif ()
-
-if (Libsodium_FOUND)
-    message (STATUS "Libsodium found (version ${Libsodium_VERSION})")
-    message (STATUS "Libsodium_INCLUDE_DIR: ${Libsodium_INCLUDE_DIR}")
-    message (STATUS "Libsodium_LIBRARIES: ${Libsodium_LIBRARIES}")
-    if (BUILD_SHARED_LIBS)
-        message (STATUS "Libsodium link type: SHARED")
-    else ()
-        message (STATUS "Libsodium link type: STATIC")
-        message (
-            STATUS
-            "I hope you included the '#define SODIUM_STATIC 1' in your code"
-            )
-    endif ()
-else ()
-    message (FATAL_ERROR "Libsodium not found")
-endif ()
+# Enable FetchContent module
+include(FetchContent)
 
 # Add the CSV Parser library
-add_subdirectory ("${PROJECT_SOURCE_DIR}/extern/csv-parser")
-
-# Fetch GoogleTest framework
-include(FetchContent)
 FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-if (WIN32)
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
-endif ()
+    csv_parser
+    GIT_REPOSITORY https://github.com/vincentlaucsb/csv-parser.git
+    GIT_TAG 2.3.0
+    )
+FetchContent_MakeAvailable(csv_parser)
+
+# Patch the CSV Parser library CMakeLists.txt file
+configure_file (
+    "${PROJECT_SOURCE_DIR}/extern/csv-parser/CMakeLists.txt.in"
+    "${csv_parser_SOURCE_DIR}/CMakeLists.txt"
+    COPYONLY
+    )
 
 # Add the source files directory
 add_subdirectory ("${PROJECT_SOURCE_DIR}/src")
 
-# Add the tests directory
+# Check if the tests are enabled
+if (NOT DEFINED BUILD_TESTS)
+    option (BUILD_TESTS "Build the tests" OFF)  # Default to OFF
+endif ()
+
+# Add the test files directory if the tests are enabled
 if (BUILD_TESTS)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+    )
+
+    # For Windows: Prevent overriding the parent project's
+    # compiler/linker settings
+    set (gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
     add_subdirectory ("${PROJECT_SOURCE_DIR}/tests")
+
 endif ()
