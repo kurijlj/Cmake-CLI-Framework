@@ -9,40 +9,30 @@ message(STATUS "Going through ./src")
 # app
 # -----------------------------------------------------------------------------
 
-# Show message that we are building the app target
-message(STATUS "Configuring the `app` target")
+# Show message that we are building the `cli_app' target
+message(STATUS "Configuring the `cli_app' target")
 
-# Set the source files for the `app` target
-add_executable(app app.cpp)
+# Set the source files for the `cli_app' target
+add_executable(cli_app cli_app.cxx)
 
 # Link the `app` target with the required libraries
-target_link_libraries(app PRIVATE
+target_link_libraries(cli_app PRIVATE
     clipp
     sqlite3
-    Libsodium
     csv
 )
 
 # Include the required directories for the `app` target
-target_include_directories(app PRIVATE
+target_include_directories(cli_app PRIVATE
     ${CSV_INCLUDE_DIR}
 )
 
 # Post-build actions for the `app` target
-add_custom_command(TARGET app POST_BUILD
+add_custom_command(TARGET cli_app POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${PROJECT_SOURCE_DIR}/sample_data
         ${CMAKE_CURRENT_BINARY_DIR}/sample_data
 )
-
-if (BUILD_SHARED_LIBS AND WIN32)
-    # Copy the shared libraries to the output directory
-    add_custom_command(TARGET app POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${Libsodium_SHARED_LIBRARY}/libsodium.dll"
-            "$<TARGET_FILE_DIR:app>"
-    )
-endif ()
 
 
 # -----------------------------------------------------------------------------
@@ -53,7 +43,7 @@ endif ()
 message(STATUS "Configuring the `stat_demo` target")
 
 # Set the source files for the `stat_demo` target
-add_executable(stat_demo stat_demo.cpp)
+add_executable(stat_demo stat_demo.cxx)
 
 # Link the `stat_demo` target with the required libraries
 target_link_libraries(stat_demo PRIVATE
