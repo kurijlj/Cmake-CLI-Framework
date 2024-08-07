@@ -211,7 +211,6 @@ int main(int argc, char *argv[])
       }
       std::cerr << "\n";
       printShortHelp(exec_name.c_str());
-
       throw EXIT_FAILURE;
     }
 
