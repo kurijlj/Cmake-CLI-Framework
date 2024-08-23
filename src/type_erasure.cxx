@@ -74,7 +74,7 @@
 #include <fstream>      // Required for file I/O operations
 #include <iomanip>      // required by std::setw
 #include <iostream>     // required by cin, cout, ...
-#include <memory>       // required by std::unique_ptr
+#include <sstream>      // required by std::stringstream
 #include <string>       // required by std::string
 #include <string_view>  // required by std::string_view
 #include <vector>       // required by std::vector
@@ -145,92 +145,149 @@ void showHelp(
 // User defined class templates Section
 // ============================================================================
 
-namespace inpupt_validators {
-  namespace equality_support_details {
-    template <typename T, typename R, typename = R>
-    struct test_equality : std::false_type {};
+template <typename InputDataType, typename CheckDataType = bool>
+class Constraint {
+public:
+    virtual bool check(const InputDataType & input) const = 0;
+    virtual std::string str() const = 0;
 
-    // NOTE: This is a partial specialization of the equality template. It is
-    // used to check if the type T supports the equality operator. If it does,
-    // the value member of the equality struct will be set to true.
-    //
-    // The decltype(std::declval<T>() == std::declval<T>()) is used to check if
-    // the type T supports the equality operator. If it does, the equality
-    // struct will be set to true.
-    //
-    // Utility function `declval` is used to convert any type T to a reference
-    // type, making it possible to use member functions in the operand of the
-    // decltype specifier without the need to go through constructors.
-    template <typename T, typename R>
-    struct test_equality<T, R, decltype(std::declval<T>() == std::declval<T>())>
-     : std::true_type {};
-  }
+protected:
+    CheckDataType m_value;
+};
 
-  template<typename T, typename R = bool>
-  struct equality_supported : equality_support_details::test_equality<T, R> {};
-
-  template <typename InputType, typename ConstraintType = InputType>
-  class Constraint {
-  protected:
-    const ConstraintType constraint_value;
-
-  public:
-    Constraint(const ConstraintType & value) : constraint_value(value) {}
-    virtual ~Constraint() = default;
-
-    virtual bool check(const InputType & checkable_value) = 0;
-
-    ConstraintType value() const {
-      return constraint_value;
-    }
-  };
-
-  template <typename DataType>
-  class IsEqualTo : public Constraint<DataType, DataType> {
-    static_assert(
-      true == equality_supported<DataType>::value,
-      "'DataType' must support equality operator!"
-      );
-
-  public:
-    IsEqualTo(const DataType & constraint)
-      : Constraint<DataType, DataType>(constraint) {}
-    ~IsEqualTo() = default;
-
-    bool check(const DataType & checkable_value) override {
-      return Constraint<DataType, DataType>::constraint_value
-        == checkable_value;
-    }
-    friend std::ostream& operator<<(std::ostream& os, const IsEqualTo& obj) { 
-        os << "equal to: " << Constraint<DataType, DataType>::constraint_value; 
-        return os;  // Return the stream 
-    } 
-  };
-
-  template <typename DataType>
-  class InputValidator {
-  private:
-    std::vector<std::unique_ptr<Constraint<DataType>>> constraints;
-
-  public:
-    InputValidator() = default;
+template <typename InputDataType>
+class InputValidator {
+public:
+    InputValidator(const InputDataType & data) : m_data(data) { }
     ~InputValidator() = default;
 
+    template <typename CheckDataType = bool>
     InputValidator & add_constraint(
-        std::unique_ptr<Constraint<DataType>> constraint) {
-      constraints.push_back(std::move(constraint));
-      return *this;
+            const Constraint<InputDataType, CheckDataType> * constraint
+        ) {
+        m_constraints.push_back(new ConstraintModel<CheckDataType>(constraint));
+        return *this;
+    }
+    bool validate() const {
+        for (auto constraint : m_constraints) {
+            if (!constraint->check(m_data)) {
+                std::cerr << m_data
+                  << " doesn't pass chack against"
+                  << constraint
+                  << "\n";
+                return false;
+            }
+        }
+
+        return true;
+    }
+    std::string str() const {
+        std::stringstream ss;
+        ss << m_data << " must conform to following constraints:\n";
+        for (auto constraint : m_constraints) {
+            ss << constraint->str() << "\n";
+        }
+        return ss.str();
+    }
+    friend std::ostream & operator<<(std::ostream & os,
+            const InputValidator<InputDataType> & obj
+        ) {
+        os << obj.m_data << " must conform to following constraints:\n";
+        for (auto constraint : obj.m_constraints) {
+            os << constraint->str() << "\n";
+        }
+        return os;
     }
 
-    bool validate(const DataType & value) {
-      for (const auto & constraint : constraints) {
-        if (!constraint->check(value)) {
-          return false;
+private:
+    class ConstraintConcept {
+    public:
+        virtual bool check(const InputDataType & input) const = 0;
+        virtual std::string str() const = 0;
+    };
+
+    template <typename CheckDataType>
+    class ConstraintModel : public ConstraintConcept {
+    public:
+        ConstraintModel(
+            const Constraint<InputDataType,
+            CheckDataType> * constraint
+        ) : m_constraint(constraint) { }
+        bool check(const InputDataType & input) const override {
+            return m_constraint->check(input);
         }
-      }
-      return true;
+        std::string str() const override {
+            return m_constraint->str();
+        }
+        friend std::ostream & operator<<(
+                std::ostream & os,
+                const ConstraintModel<CheckDataType> & obj
+            ) {
+            os << obj.m_constraint;
+            return os;
+        }
+
+    protected:
+        const Constraint<InputDataType, CheckDataType> * m_constraint;
+    };
+
+protected:
+    const InputDataType m_data;
+    std::vector<ConstraintConcept *> m_constraints;
+};
+
+template <typename InputDataType>
+class NonParametrizedConstraint : public Constraint<InputDataType> {
+public:
+    NonParametrizedConstraint() {
+        this->m_value = true;
     }
-  };
+    bool check(const InputDataType & input) const override {
+        std::cout << "Checking: "
+            << input
+            << " against non-parametrized constraint!\n";
+        return true;
+    }
+    std::string str() const override {
+        return std::string("non-parametrized constraint");
+    }
+    friend std::ostream & operator<<(
+            std::ostream & os,
+            const NonParametrizedConstraint<InputDataType> & obj
+        ) {
+        os << "non-parametrized constraint";
+        return os;
+    }
+};
+
+template <typename InputDataType, typename CheckDataType>
+class ParametrizedConstraint : public Constraint<InputDataType, CheckDataType> {
+public:
+    ParametrizedConstraint(const CheckDataType & value) {
+        this->m_value = value;
+    }
+    bool check(const InputDataType & input) const override {
+        std::cout << "Checking: "
+            << input
+            << " against parametrized constraint with value: "
+            << this->m_value
+            << "!\n";
+        return true;
+    }
+    std::string str() const override {
+        std::stringstream ss;
+        ss << "parametrized constraint with value: "
+            << this->m_value;
+        return ss.str();
+    }
+    friend std::ostream & operator<<(
+            std::ostream & os,
+            const ParametrizedConstraint<InputDataType, CheckDataType> & obj
+        ) {
+        os << "parametrized constraint with value: "
+            << obj.m_value;
+        return os;
+    }
 };
 
 
@@ -454,6 +511,24 @@ int main(int argc, char *argv[])
 
     // Close the database
     sqlite3_close(DB); 
+
+    // Test input validators
+    InputValidator<int> iv = {10};
+    NonParametrizedConstraint<int> c1;
+    ParametrizedConstraint<int, float> c2 = {3.14};
+
+    std::cout << exec_name << ": " << iv;
+    std::cout << exec_name << ": " << c1 << "\n";
+    std::cout << exec_name << ": " << c2 << "\n";
+    std::cout << "\n";
+
+    iv.add_constraint(&c1);
+    std::cout << exec_name << ": " << iv;
+    iv.add_constraint(&c2);
+    std::cout << exec_name << ": " << iv;
+    std::cout << "\n";
+
+    iv.validate();
 
     // Return success
     throw EXIT_SUCCESS;
