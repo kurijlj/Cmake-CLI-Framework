@@ -1,24 +1,24 @@
-// MainAction.h
-#ifndef MAINACTION_H
-#define MAINACTION_H
-
-#include <functional>
-#include <string_view>
+// ShowVersionInfoAction.h
+#ifndef SHOWVERSIONINFOACTION_H
+#define SHOWVERSIONINFOACTION_H
 
 #include "ProgramAction.h"
 
 // ----------------------------------------------------------------------------
-// MainAction
+// ShowVersionInfoAction
 // ----------------------------------------------------------------------------
 //
-// Description: Executes the main action of the program
+// Description: Displays version information about the program
 //
 // ----------------------------------------------------------------------------
-class MainAction : public ProgramAction {
+class ShowVersionInfoAction : public ProgramAction {
 public:
-  using ExecuteStrategy = std::function<int(MainAction const&)>;
+  using ExecuteStrategy = std::function<int(
+    ShowVersionInfoAction const&,
+    std::string_view const&
+    )>;
 
-  explicit MainAction(ExecuteStrategy executor)
+  explicit ShowVersionInfoAction(ExecuteStrategy executor)
     : executor_(std::move(executor)) { }
   
   int execute(std::string_view const& exec_name) const override {
@@ -29,4 +29,4 @@ private:
   ExecuteStrategy executor_;
 };
 
-#endif // MAINACTION_H
+#endif // SHOWVERSIONINFOACTION_H

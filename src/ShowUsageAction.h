@@ -1,24 +1,24 @@
-// UsageAction.h
-#ifndef USAGEACTION_H
-#define USAGEACTION_H
-
-#include <functional>
-#include <string_view>
+// SHowUsageAction.h
+#ifndef SHOWUSAGEACTION_H
+#define SHOWUSAGEACTION_H
 
 #include "ProgramAction.h"
 
 // ----------------------------------------------------------------------------
-// UsageAction
+// ShowUsageAction
 // ----------------------------------------------------------------------------
 //
 // Description: Displays usage information about the program
 //
 // ----------------------------------------------------------------------------
-class UsageAction : public ProgramAction {
+class ShowUsageAction : public ProgramAction {
 public:
-  using ExecuteStrategy = std::function<int(UsageAction const&)>;
+  using ExecuteStrategy = std::function<int(
+    ShowUsageAction const&,
+    std::string_view const&
+    )>;
 
-  explicit UsageAction(ExecuteStrategy executor)
+  explicit ShowUsageAction(ExecuteStrategy executor)
     : executor_(std::move(executor)) { }
   
   int execute(std::string_view const& exec_name) const override {
@@ -29,4 +29,4 @@ private:
   ExecuteStrategy executor_;
 };
 
-#endif // USAGEACTION_H
+#endif // SHOWUSAGEACTION_H
