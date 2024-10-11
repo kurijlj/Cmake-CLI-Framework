@@ -5,6 +5,7 @@
 # Print message to console that we are building the source targets
 message(STATUS "Going through ./src")
 
+
 # -----------------------------------------------------------------------------
 # cli_app
 # -----------------------------------------------------------------------------
@@ -32,6 +33,22 @@ add_custom_command(TARGET cli_app POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/sample_data
     ${CMAKE_CURRENT_BINARY_DIR}/sample_data
+  )
+
+
+# -----------------------------------------------------------------------------
+# design_test
+# -----------------------------------------------------------------------------
+
+# Show message that we are building the `design_test' target
+message(STATUS "Configuring the `design_test' target")
+
+# Set the source files for the `design_test' target
+add_executable(design_test design_test.cxx)
+
+# Link the `design_test` target with the required libraries
+target_link_libraries(design_test PRIVATE
+  clipp
   )
 
 

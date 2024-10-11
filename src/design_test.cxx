@@ -63,6 +63,9 @@
 // External libraries headers
 #include <clipp.hpp>    // command line arguments parsing
 
+// Project librarties headers
+#include "ShowShortHelpStrategy.h"
+
 
 // ============================================================================
 // Global constants section
@@ -91,27 +94,6 @@ There is NO WARRANTY, to the extent permitted by law.\n";
 // ============================================================================
 // Utility function prototypes
 // ============================================================================
-
-// ----------------------------------------------------------------------------
-// 'printShortHelp' function
-// ----------------------------------------------------------------------------
-//
-// Description:
-// This function prints a short help message to the standard output. The
-// message is intended to be used when the user passes wrong command line
-// options.
-//
-// Parameters:
-//   exec_name: The name of the executable file running the program.
-//
-// Returns:
-// This function does not return a value.
-//
-// Exceptions:
-// This function does not throw exceptions.
-//
-// ----------------------------------------------------------------------------
-void printShortHelp(const char * = kAppName) noexcept;
 
 // ----------------------------------------------------------------------------
 // 'printUsage' function
@@ -274,7 +256,9 @@ int main(int argc, char *argv[])
         std::cerr << opt << " ";
       }
       std::cerr << "\n";
-      printShortHelp(exec_name.c_str());
+      ShowShortHelpAction unsupported_option{ShowShortHelpStrategy()};
+      unsupported_option.execute(kAppName);
+
       throw EXIT_FAILURE;
     }
 
@@ -347,10 +331,6 @@ int main(int argc, char *argv[])
 // ============================================================================
 // Function definitions
 // ============================================================================
-
-inline void printShortHelp(const char *exec_name) noexcept{
-  std::cout << "Try '" << exec_name << " --help' for more information.\n";
-}
 
 inline void printUsage(
     const clipp::group          &group,
