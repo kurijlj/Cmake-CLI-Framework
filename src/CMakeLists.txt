@@ -51,6 +51,11 @@ target_link_libraries(design_test PRIVATE
   clipp
   )
 
+# Include the required directories for the `cli_app` target
+target_include_directories(design_test PRIVATE
+  ${PROJECT_SOURCE_DIR}/include
+  )
+
 
 # -----------------------------------------------------------------------------
 # stat_demo

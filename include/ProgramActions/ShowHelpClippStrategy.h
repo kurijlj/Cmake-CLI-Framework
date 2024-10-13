@@ -44,6 +44,8 @@ public:
       "Report bugs to <" + std::string {author_email_} + ">."
       );
 
+    std::cout << man;
+
     return EXIT_SUCCESS;
   }
 

@@ -1,4 +1,4 @@
-// Show/ShorHelpStrategy.h
+// ShowShortHelpStrategy.h
 #ifndef SHOWSHORTHELPSTRATEGY_H
 #define SHOWSHORTHELPSTRATEGY_H
 
