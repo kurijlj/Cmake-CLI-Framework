@@ -7,10 +7,11 @@
 #include <string_view>
 
 // ----------------------------------------------------------------------------
-// Abstract class for all actions that can be executed by the program
+// ProgramAction
 // ----------------------------------------------------------------------------
 //
-// Description: TODO: Add description
+// Description: Abstract class for all actions that can be executed by
+//              the program
 //
 // ----------------------------------------------------------------------------
 

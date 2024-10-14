@@ -65,11 +65,13 @@
 #include <clipp.hpp>    // command line arguments parsing
 
 // Project librarties headers
-#include <ProgramActions/MainProgramStrategy.h>
+// #include <ProgramActions/MainProgramStrategy.h>
 #include <ProgramActions/ShowHelpClippStrategy.h>
 #include <ProgramActions/ShowUsageClippStrategy.h>
 #include <ProgramActions/ShowVersionInfoStrategy.h>
 #include <ProgramActions/UnsupportedOptionsClippStrategy.h>
+
+#include "MainProgramStrategy.h"
 
 
 // ============================================================================
@@ -100,6 +102,7 @@ There is NO WARRANTY, to the extent permitted by law.\n";
 // Utility function prototypes
 // ============================================================================
 
+
 // ============================================================================
 // Main Function Section
 // ============================================================================
@@ -118,6 +121,7 @@ int main(int argc, char *argv[])
     bool show_help;
     bool print_usage;
     bool show_version;
+    std::string input_file;
     std::vector<std::string> unsupported;
     };
 
@@ -126,6 +130,7 @@ int main(int argc, char *argv[])
     false,  // show_help
     false,  // print_usage
     false,  // show_version
+    "",     // input_file
     {}      // unsupported options aggregator
     };
 
@@ -146,6 +151,7 @@ int main(int argc, char *argv[])
     //   help, usage and version switches. Then enforce the required
     //   positional arguments by checking if their values are set.
     (
+      clipp::opt_value(istarget, "INPUT_FILE", user_options.input_file),
       clipp::option("-h", "--help").set(user_options.show_help)
         .doc("show this help message and exit"),
       clipp::option("--usage").set(user_options.print_usage)
