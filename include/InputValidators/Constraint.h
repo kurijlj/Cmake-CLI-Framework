@@ -10,14 +10,12 @@
 //              the input validation
 //
 // ----------------------------------------------------------------------------
-template <typename InputDataType, typename CheckDataType = bool>
+template <typename InputDataType>
 class Constraint {
 public:
+  ~Constraint() = default;
   virtual bool check(const InputDataType & input) const = 0;
   virtual std::string str() const = 0;
-
-protected:
-  CheckDataType value_;
 };
 
 #endif // CONSTRAINT_H

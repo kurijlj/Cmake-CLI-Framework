@@ -4,19 +4,27 @@
 
 #include "Constraint.h"
 
+// ----------------------------------------------------------------------------
+// ParametrizedConstraint
+// ----------------------------------------------------------------------------
+//
+// Description: Abstract base class for all constraints that do take a
+//              constraint parameter at the run time. i.e. greater than, less
+//              than, etc.
+//
+// ----------------------------------------------------------------------------
 template <typename InputDataType, typename CheckDataType>
-class ParametrizedConstraint : public Constraint<InputDataType, CheckDataType> {
+class ParametrizedConstraint : public Constraint<InputDataType> {
 public:
-  explicit ParametrizedConstraint(const CheckDataType & value) {
-    this->value_ = value;
-  }
+  explicit ParametrizedConstraint(const CheckDataType & value) : value_(value)
+  { }
 
   bool check(const InputDataType & input) const override {
-    std::cout << "Checking: "
+    std::cout << "Checking '"
       << input
-      << " against parametrized constraint with value: "
-      << this->value_
-      << "!\n";
+      << "' against parametrized constraint '"
+      << value_
+      << "'!\n";
 
     return true;
   }
@@ -24,7 +32,7 @@ public:
   std::string str() const override {
     std::stringstream ss;
     ss << "parametrized constraint with value: "
-      << this->value_;
+      << value_;
 
     return ss.str();
   }
@@ -38,6 +46,9 @@ public:
 
     return os;
   }
+
+protected:
+  CheckDataType value_;
 };
 
 #endif // PARAMETRIZEDCONSTRAINT_H

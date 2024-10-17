@@ -28,16 +28,12 @@ public:
     ) const {
     std::cout << exec_name << ": Hello world!\n";
 
-    // NonParametrizedConstraint<int> a{ };
-    std::unique_ptr<Constraint<int>> a
-      = std::make_unique<NonParametrizedConstraint<int>> ();
-    std::cout << exec_name << ": " << a.get() << "\n";
-    std::cout << exec_name << ": ";
-    a->check(10);
-    std::unique_ptr<Constraint<int>> b = std::move(a);
-    std::cout << exec_name << ": " << b.get() << "\n";
-    std::cout << exec_name << ": ";
-    b->check(10);
+    // Test InputValidators concept
+    InputValidator<int> input_validator{42};
+    input_validator
+      .add_constraint(std::make_unique<NonParametrizedConstraint<int>> ())
+      .add_constraint(std::make_unique<ParametrizedConstraint<int, int>> (13));
+    input_validator.validate();
 
     return EXIT_SUCCESS;
   }

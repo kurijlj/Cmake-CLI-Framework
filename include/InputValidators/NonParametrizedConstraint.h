@@ -17,10 +17,7 @@
 template <typename InputDataType>
 class NonParametrizedConstraint : public Constraint<InputDataType> {
 public:
-  explicit NonParametrizedConstraint() {
-    this->value_ = true;  // We are initializing protected data member of the
-                          // parent class
-  }
+  explicit NonParametrizedConstraint() { }
 
   bool check(const InputDataType & input) const override {
     std::cout << "Checking '"
