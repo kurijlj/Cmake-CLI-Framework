@@ -16,17 +16,23 @@
 template <typename InputDataType, typename CheckDataType>
 class ParametrizedConstraint : public Constraint<InputDataType> {
 public:
-  explicit ParametrizedConstraint(const CheckDataType & value) : value_(value)
+  using CheckStrategy = std::function<bool(
+    ParametrizedConstraint<InputDataType, CheckDataType> const &,
+    InputDataType const &
+    )>;
+
+  explicit ParametrizedConstraint(
+      CheckStrategy executor,
+      const CheckDataType & value
+    ) : executor_(std::move(executor)), value_(value)
   { }
 
   bool check(const InputDataType & input) const override {
-    std::cout << "Checking '"
-      << input
-      << "' against parametrized constraint '"
-      << value_
-      << "'!\n";
+    return executor_(*this, input);
+  }
 
-    return true;
+  CheckDataType value() const {
+    return value_;
   }
 
   std::string str() const override {
@@ -49,6 +55,9 @@ public:
 
 protected:
   CheckDataType value_;
+
+private:
+  CheckStrategy executor_;
 };
 
 #endif // PARAMETRIZEDCONSTRAINT_H

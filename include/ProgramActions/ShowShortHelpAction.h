@@ -19,7 +19,8 @@ public:
     )>;
 
   explicit ShowShortHelpAction(ExecuteStrategy executor)
-    : executor_(std::move(executor)) { }
+    : executor_(std::move(executor))
+  { }
   
   // Shows short help message
   int execute(std::string_view const& exec_name) const override{

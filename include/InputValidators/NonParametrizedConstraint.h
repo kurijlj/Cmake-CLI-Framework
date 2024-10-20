@@ -17,14 +17,17 @@
 template <typename InputDataType>
 class NonParametrizedConstraint : public Constraint<InputDataType> {
 public:
-  explicit NonParametrizedConstraint() { }
+  using CheckStrategy = std::function<bool(
+    NonParametrizedConstraint<InputDataType> const &,
+    InputDataType const &
+    )>;
+
+  explicit NonParametrizedConstraint(CheckStrategy executor)
+    : executor_(std::move(executor))
+  { }
 
   bool check(const InputDataType & input) const override {
-    std::cout << "Checking '"
-      << input
-      << "' against non-parametrized constraint!\n";
-
-    return true;
+    return executor_(*this, input);
   }
 
   std::string str() const override {
@@ -38,6 +41,9 @@ public:
     os << "non-parametrized constraint";
     return os;
   }
+
+private:
+  CheckStrategy executor_;
 };
 
 #endif // NONPARAMETRIZEDCONSTRAINT_H

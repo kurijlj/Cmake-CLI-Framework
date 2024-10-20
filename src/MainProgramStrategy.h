@@ -7,8 +7,8 @@
 #include <iostream>
 
 #include <InputValidators/InputValidator.h>
-#include <InputValidators/NonParametrizedConstraint.h>
-#include <InputValidators/ParametrizedConstraint.h>
+#include <InputValidators/DefaultCheckStrategyNPC.h>
+#include <InputValidators/DefaultCheckStrategyPC.h>
 
 // ----------------------------------------------------------------------------
 // MainProgramStrategy
@@ -31,8 +31,13 @@ public:
     // Test InputValidators concept
     InputValidator<int> input_validator{42};
     input_validator
-      .add_constraint(std::make_unique<NonParametrizedConstraint<int>> ())
-      .add_constraint(std::make_unique<ParametrizedConstraint<int, int>> (13));
+      .add_constraint(std::make_unique<NonParametrizedConstraint<int>> (
+        DefaultCheckStrategyNPC<int>()
+      ))
+      .add_constraint(std::make_unique<ParametrizedConstraint<int, int>> (
+        DefaultCheckStrategyPC<int, int>(),
+        13
+        ));
     input_validator.validate();
 
     return EXIT_SUCCESS;

@@ -2,6 +2,8 @@
 #ifndef CONSTRAINT_H
 #define CONSTRAINT_H
 
+#include <functional>
+
 // ----------------------------------------------------------------------------
 // Constraint
 // ----------------------------------------------------------------------------
@@ -14,6 +16,7 @@ template <typename InputDataType>
 class Constraint {
 public:
   ~Constraint() = default;
+
   virtual bool check(const InputDataType & input) const = 0;
   virtual std::string str() const = 0;
 };
