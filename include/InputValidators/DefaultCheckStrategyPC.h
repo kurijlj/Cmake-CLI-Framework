@@ -19,8 +19,13 @@ template <typename InputDataType, typename CheckDataType>
 class DefaultCheckStrategyPC {
 public:
   using ConstraintType = ParametrizedConstraint<InputDataType, CheckDataType>;
+  using pConstraintType = std::unique_ptr<ConstraintType>;
 
   explicit DefaultCheckStrategyPC() = default;
+
+  static pConstraintType create(const CheckDataType & value) {
+    return std::make_unique<ConstraintType> (DefaultCheckStrategyPC(), value);
+  };
 
   bool operator()(
       ConstraintType const& constraint,

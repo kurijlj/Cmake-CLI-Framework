@@ -19,8 +19,13 @@ template <typename InputDataType>
 class DefaultCheckStrategyNPC {
 public:
   using ConstraintType = NonParametrizedConstraint<InputDataType>;
+  using pConstraintType = std::unique_ptr<ConstraintType>;
 
   explicit DefaultCheckStrategyNPC() = default;
+
+  static pConstraintType create() {
+    return std::make_unique<ConstraintType>(DefaultCheckStrategyNPC());
+  }
 
   bool operator()(
       ConstraintType const& constraint,

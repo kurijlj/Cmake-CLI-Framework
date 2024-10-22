@@ -31,13 +31,9 @@ public:
     // Test InputValidators concept
     InputValidator<int> input_validator{42};
     input_validator
-      .add_constraint(std::make_unique<NonParametrizedConstraint<int>> (
-        DefaultCheckStrategyNPC<int>()
-      ))
-      .add_constraint(std::make_unique<ParametrizedConstraint<int, int>> (
-        DefaultCheckStrategyPC<int, int>(),
-        13
-        ));
+      .add_constraint(DefaultCheckStrategyNPC<int>::create())
+      .add_constraint(DefaultCheckStrategyPC<int, int>::create(13));
+
     input_validator.validate();
 
     return EXIT_SUCCESS;
